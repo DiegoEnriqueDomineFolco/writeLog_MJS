@@ -19,7 +19,7 @@ The `writeLog` function is a standalone logging utility for Node.js scripts in t
 
 ### Usage
 
-```js
+```mjs
 import { writeLog } from './utils.mjs';
 
 writeLog(false, 'Process started', { user: 'admin', action: 'login' });
@@ -33,3 +33,33 @@ writeLog(true, 'Live mode enabled', operationResult);
 - Reviewing past executions with organized, consistent logs.
 
 **This function is available to all developers and is recommended for any script where advanced traceability or debugging is required.**
+
+
+```mjs
+//HERE IS THE CODE
+
+export function writeLog(liveMode = false, ...args) {
+	let logFile;
+	try {
+		// Switch log file depending on liveMode
+		// Using global ISO_EXEC_TIMESTAMP if available
+		switch (liveMode) {
+			case true:
+				logFile = `debug_live_${globalThis.ISO_EXEC_TIMESTAMP || 'default'}.log`;
+				break;
+			default:
+				logFile = `debug_${globalThis.ISO_EXEC_TIMESTAMP || 'default'}.log`;
+		}
+
+		const logPath = path.join(process.cwd(), logFile);
+		const timestamp = new Date().toISOString();
+		const message = args.map(a =>
+			typeof a === 'string' ? a : JSON.stringify(a, null, 2)
+		).join(' ') + '\n';
+		fs.appendFileSync(logPath, `\n\n[${timestamp}] ${message}`);
+	} catch (err) {
+		// Fallback: print to stderr if file write fails
+		console.error('writeLog error:', err);
+	}
+}
+```
